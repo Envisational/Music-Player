@@ -87,7 +87,9 @@ const playSong = (id) => {
   };
 
   const pauseSong = () => {
-
+    userData.songCurrentTime = audio.currentTime;
+    audio.pause();
+    playButton.classList.remove("playing");
   }
 
 });
