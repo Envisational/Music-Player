@@ -55,6 +55,13 @@ body {
     letter-spacing: 3px;
     white-space: nowrap;
 }
+#player-album-art {
+    width: 150px;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 #player-album-art img {
     width: 100%;
     border-radius: 10px;
@@ -77,8 +84,13 @@ body {
     fill: currentColor;
 }
 .playlist {
-    margin-top: 30px;
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     width: 100%;
+    text-align: center;
+    margin-top: 30px;
 }
 .playlist-bar {
     display: flex;
