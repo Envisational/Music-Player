@@ -62,6 +62,18 @@ renderSongs(sortSongs());
 // Play song based on ID
 const playSong = (id) => {
     const song = userData?.songs.find((song) => song.id === id);
+    audio.src = song.url;
+    audio.title = song.title;
+    if (userData?.currentSong === null || userData?.currentSong.id !== song.id) {
+        audio.currentTime = 0;
+      }
+    else {
+        audio.currentTime = userData?.songCurrentTime;
+    }
+    userData.currentSong = song;
+    
+    playButton.classList.add("playing");
+    audio.play();
   };
 
 });
