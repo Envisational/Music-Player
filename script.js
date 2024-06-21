@@ -42,7 +42,21 @@ const renderSongs = (array) => {
     playlistSongs.innerHTML = songsHTML;
 };
 
+const sortSongs = () => {
+    userData?.songs.sort((a, b) => {
+        // Sort by title
+        if (a.title < b.title) {
+            return -1;
+        } 
+        else if (a.title > b.title) {
+            return 1;
+        }
 
+        return 0;
+    });
+}
+
+renderSongs(userData?.songs);
 
 
 });
