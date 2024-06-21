@@ -52,6 +52,9 @@ playButton.addEventListener("click", () => {
     }
 });
 
+
+pauseButton.addEventListener("click", pauseSong);
+
 const sortSongs = () => {
     userData?.songs.sort((a, b) => {
         // Sort by title
