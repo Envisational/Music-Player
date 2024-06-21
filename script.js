@@ -54,10 +54,15 @@ const sortSongs = () => {
 
         return 0;
     });
+    return userData?.songs;
 }
 
-renderSongs(userData?.songs);
+renderSongs(sortSongs());
 
+// Play song based on ID
+const playSong = (id) => {
+    const song = userData?.songs.find((song) => song.id === id);
+  };
 
 });
 
