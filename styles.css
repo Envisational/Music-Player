@@ -16,6 +16,8 @@ body {
     width: 100%;
     max-width: 800px;
     padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: auto;
 }
 .player {
     background-color: #1e1e1e;
@@ -117,3 +119,53 @@ body {
 #playlist-songs li:hover {
     background-color: #3e3e3e;
 }
+
+
+
+  
+  /* Styles for the playlist items */
+  .playlist-song {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .playlist-song-info {
+    cursor: pointer;
+    flex-grow: 1;
+  }
+  
+  .playlist-song-title,
+  .playlist-song-artist,
+  .playlist-song-duration {
+    display: block;
+  }
+  
+  .playlist-song-title {
+    font-weight: bold;
+    color: #797878;
+  }
+  
+  .playlist-song-artist {
+    color: #c4c1c1;
+  }
+  
+  .playlist-song-duration {
+    color: #ffffff;
+    font-size: 0.9em;
+  }
+  
+  .playlist-song-delete {
+    background: none;
+    border: none;
+    color: #ff5c5c;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+  }
+  
