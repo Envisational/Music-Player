@@ -171,7 +171,11 @@ const playSong = (id) => {
       playlistSongs.appendChild(resetButton);
       
       resetButton.addEventListener("click", () => {
-    
+        allSongs = [];
+        userData.songs = [...allSongs];
+        renderSongs(sortSongs());
+        setPlayButtonAccessibleText();
+        resetButton.remove();
       })
     }
   }
