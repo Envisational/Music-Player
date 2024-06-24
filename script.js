@@ -5,6 +5,8 @@ const pauseButton = document.getElementById("pause");
 const nextButton = document.getElementById("next");
 const previousButton = document.getElementById("previous");
 const shuffleButton = document.getElementById("shuffle");
+const progressBarContainer = document.getElementById('progress-container');
+const progressBar = document.getElementById('progress-bar');
 
 // all songs array
 const allSongs = [
@@ -32,6 +34,17 @@ let userData = {
   currentSong: null,
   songCurrentTime: 0,
 };
+
+const updateProgressBar = () => {
+  const progressBar = document.getElementById('progress-bar');
+  progressBar.style.width = (audio.currentTime / audio.duration) * 100 + '%';
+};
+
+audio.addEventListener('timeupdate', updateProgressBar);
+
+document.getElementById('volume-control').addEventListener('input', (e) => {
+  audio.volume = e.target.value;
+});
 
 // Play song
 const playSong = (id) => {
