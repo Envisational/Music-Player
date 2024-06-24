@@ -10,7 +10,7 @@ const allSongs = [
     {id: 0,
     title: "1901",
     artist: "Phoenix",
-    duration: "02:43",
+    duration: "2:43",
     url: "assets/songs/Phoenix-1901.mp3"},
 ];
 
@@ -48,6 +48,122 @@ const setPlayButtonAccessibleText = () => {
   playButton.setAttribute("aria-label", song?.title ? `Play ${song.title}` : "Play");
 }
 
+// Play song based on ID
+const playSong = (id) => {
+  const song = userData?.songs.find((song) => song.id === id);
+  audio.src = song.url;
+  audio.title = song.title;
+  if (userData?.currentSong === null || userData?.currentSong.id !== song.id) {
+      audio.currentTime = 0;
+    }
+  else {
+      audio.currentTime = userData?.songCurrentTime;
+  }
+  userData.currentSong = song;
+  
+  playButton.classList.add("playing");
+  highlightCurrentSong();
+  setPlayerDisplay();
+  setPlayButtonAccessibleText();
+  audio.play();
+};
+
+const pauseSong = () => {
+  userData.songCurrentTime = audio.currentTime;
+  audio.pause();
+  playButton.classList.remove("playing");
+}
+
+// Play next song
+const playNextSong = () => {
+  if (userData?.currentSong === null) {
+    playSong(userData?.songs[0].id);
+  }
+  else {
+      const currentSongIndex = getCurrentSongIndex();
+      const nextSong = userData?.songs[currentSongIndex + 1];
+      playSong(nextSong.id);
+    }
+}
+
+
+// Play previous song
+const playPreviousSong = () => {
+  if (userData?.currentSong === null) {
+    return;
+  }
+  else {
+      const currentSongIndex = getCurrentSongIndex();
+      const previousSong = userData?.songs[currentSongIndex - 1];
+      playSong(previousSong.id);
+    }
+};
+
+// Shuffle songs
+const shuffle = () => {
+  userData?.songs.sort( () => Math.random() - 0.5);
+  userData.currentSong = null;
+  userData.songCurrentTime = 0;
+  renderSongs(userData?.songs);
+  pauseSong();
+  setPlayerDisplay();
+  setPlayButtonAccessibleText();
+}
+
+// Delete song
+const deleteSong = (id) => {
+    if (userData?.currentSong?.id === id) {
+      userData.currentSong = null;
+      userData.songCurrentTime = 0;
+      pauseSong();
+      setPlayerDisplay();
+}
+  userData.songs = userData?.songs.filter((song) => song.id !== id);
+  renderSongs(userData?.songs);
+  highlightCurrentSong();
+  setPlayButtonAccessibleText();
+
+  if (userData?.songs.length === 0) {
+    const resetButton = document.createElement("button");
+    const resetText = document.createTextNode("Reset Playlist");
+    resetButton.id = "reset";
+    resetButton.ariaLabel = "Reset playlist";
+    resetButton.appendChild(resetText);
+    playlistSongs.appendChild(resetButton);
+    
+    resetButton.addEventListener("click", () => {
+      allSongs = [];
+      userData.songs = [...allSongs];
+      renderSongs(sortSongs());
+      setPlayButtonAccessibleText();
+      resetButton.remove();
+    })
+  }
+}
+
+// Display current song title and artist
+const setPlayerDisplay = () => {
+  const playingSong = document.getElementById("player-song-title");
+  const songArtist = document.getElementById("player-song-artist");
+  const currentTitle = userData?.currentSong?.title;
+  const currentArtist = userData?.currentSong?.artist;
+  
+  playingSong.textContent = currentTitle ? currentTitle : "";
+  songArtist.textContent = currentArtist ? currentArtist : "";
+}
+const highlightCurrentSong = () => {
+  const playlistSongElements = document.querySelectorAll(".playlist-song");
+  const songToHighlight = document.getElementById(`song-${userData?.currentSong?.id}`);
+
+  playlistSongElements.forEach((songEl) => {
+      songEl.removeAttribute("aria-current");
+  });
+
+  if (songToHighlight) {
+      songToHighlight.setAttribute("aria-current", "true");
+  }
+}
+
 const getCurrentSongIndex = () => {
     return userData?.songs.indexOf(userData?.currentSong);
 }
@@ -60,6 +176,23 @@ playButton.addEventListener("click", () => {
         playSong(userData?.currentSong.id);
     }
 });
+
+const sortSongs = () => {
+  userData?.songs.sort((a, b) => {
+      // Sort by title
+      if (a.title < b.title) {
+          return -1;
+      } 
+      else if (a.title > b.title) {
+          return 1;
+      }
+
+      return 0;
+  });
+  return userData?.songs;
+}
+
+renderSongs(sortSongs());
 
 
 pauseButton.addEventListener("click", pauseSong);
@@ -85,140 +218,5 @@ audio.addEventListener("ended", () => {
       setPlayButtonAccessibleText();
     }
 })
-
-const sortSongs = () => {
-    userData?.songs.sort((a, b) => {
-        // Sort by title
-        if (a.title < b.title) {
-            return -1;
-        } 
-        else if (a.title > b.title) {
-            return 1;
-        }
-
-        return 0;
-    });
-    return userData?.songs;
-}
-
-renderSongs(sortSongs());
-
-// Play song based on ID
-const playSong = (id) => {
-    const song = userData?.songs.find((song) => song.id === id);
-    audio.src = song.url;
-    audio.title = song.title;
-    if (userData?.currentSong === null || userData?.currentSong.id !== song.id) {
-        audio.currentTime = 0;
-      }
-    else {
-        audio.currentTime = userData?.songCurrentTime;
-    }
-    userData.currentSong = song;
-    
-    playButton.classList.add("playing");
-    highlightCurrentSong();
-    setPlayerDisplay();
-    setPlayButtonAccessibleText();
-    audio.play();
-  };
-
-  const pauseSong = () => {
-    userData.songCurrentTime = audio.currentTime;
-    audio.pause();
-    playButton.classList.remove("playing");
-  }
-
-  // Play next song
-  const playNextSong = () => {
-    if (userData?.currentSong === null) {
-      playSong(userData?.songs[0].id);
-    }
-    else {
-        const currentSongIndex = getCurrentSongIndex();
-        const nextSong = userData?.songs[currentSongIndex + 1];
-        playSong(nextSong.id);
-      }
-  }
-
-  
-  // Play previous song
-  const playPreviousSong = () => {
-    if (userData?.currentSong === null) {
-      return;
-    }
-    else {
-        const currentSongIndex = getCurrentSongIndex();
-        const previousSong = userData?.songs[currentSongIndex - 1];
-        playSong(previousSong.id);
-      }
-  };
-
-  // Shuffle songs
-  const shuffle = () => {
-    userData?.songs.sort( () => Math.random() - 0.5);
-    userData.currentSong = null;
-    userData.songCurrentTime = 0;
-    renderSongs(userData?.songs);
-    pauseSong();
-    setPlayerDisplay();
-    setPlayButtonAccessibleText();
-  }
-
-  // Delete song
-  const deleteSong = (id) => {
-      if (userData?.currentSong?.id === id) {
-        userData.currentSong = null;
-        userData.songCurrentTime = 0;
-        pauseSong();
-        setPlayerDisplay();
-  }
-    userData.songs = userData?.songs.filter((song) => song.id !== id);
-    renderSongs(userData?.songs);
-    highlightCurrentSong();
-    setPlayButtonAccessibleText();
-
-    if (userData?.songs.length === 0) {
-      const resetButton = document.createElement("button");
-      const resetText = document.createTextNode("Reset Playlist");
-      resetButton.id = "reset";
-      resetButton.ariaLabel = "Reset playlist";
-      resetButton.appendChild(resetText);
-      playlistSongs.appendChild(resetButton);
-      
-      resetButton.addEventListener("click", () => {
-        allSongs = [];
-        userData.songs = [...allSongs];
-        renderSongs(sortSongs());
-        setPlayButtonAccessibleText();
-        resetButton.remove();
-      })
-    }
-  }
-
-  // Display current song title and artist
-  const setPlayerDisplay = () => {
-    const playingSong = document.getElementById("player-song-title");
-    const songArtist = document.getElementById("player-song-artist");
-    const currentTitle = userData?.currentSong?.title;
-    const currentArtist = userData?.currentSong?.artist;
-    
-    playingSong.textContent = currentTitle ? currentTitle : "";
-    songArtist.textContent = currentArtist ? currentArtist : "";
-  }
-  const highlightCurrentSong = () => {
-    const playlistSongElements = document.querySelectorAll(".playlist-song");
-    const songToHighlight = document.getElementById(`song-${userData?.currentSong?.id}`);
-
-    playlistSongElements.forEach((songEl) => {
-        songEl.removeAttribute("aria-current");
-    });
-
-    if (songToHighlight) {
-        songToHighlight.setAttribute("aria-current", "true");
-    }
-  }
-
-  
 });
 
