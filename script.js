@@ -42,6 +42,14 @@ const updateProgressBar = () => {
 
 audio.addEventListener('timeupdate', updateProgressBar);
 
+progressBarContainer.addEventListener('click', (e) => {
+  const width = progressBarContainer.clientWidth;
+  const clickX = e.offsetX;
+  const duration = audio.duration;
+  audio.currentTime = (clickX / width) * duration;
+});
+
+
 document.getElementById('volume-control').addEventListener('input', (e) => {
   audio.volume = e.target.value;
 });
