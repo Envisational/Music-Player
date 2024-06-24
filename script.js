@@ -24,7 +24,13 @@ const allSongs = [
     duration: "03:20",
     url: "assets/songs/Gorillaz-Rhinestone Eyes.mp3",
   },
-
+  {
+    id: 2,
+    title: "Shimmy Shimmy Ya",
+    artist: "ODB",
+    duration: "03:48",
+    url: "assets/songs/ODB-Shimmy Shimmy Ya.mp3",
+  },
  
 ];
 

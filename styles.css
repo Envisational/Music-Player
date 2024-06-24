@@ -247,3 +247,9 @@ body {
 button:focus {
     outline: 2px solid #feac32;
 }
+/* NOT WORKING */
+.playlist-song[aria-current="true"] {
+    background-color: rgba(254, 172, 50, 0.5); /* Highlight color */
+    color: #fff; /* Text color */
+  }
+  
