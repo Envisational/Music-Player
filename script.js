@@ -8,10 +8,10 @@ const nextButton = document.getElementById("next");
 const shuffleButton = document.getElementById("shuffle");
 const allSongs = [
     {id: 0,
-    title: "Your Song",
-    artist: "Your Artist",
-    duration: "00:00",
-    url: "your-song-url.mp3"}
+    title: "1901",
+    artist: "Phoenix",
+    duration: "02:43",
+    url: "assets/songs/Phoenix-1901.mp3"},
 ];
 
 const audio = new Audio();
