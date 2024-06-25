@@ -41,6 +41,22 @@ let userData = {
   songCurrentTime: 0,
 };
 
+// Highlight current song
+const highlightCurrentSong = () => {
+  const playlistSongElements = document.querySelectorAll(".playlist-song");
+  const songToHighlight = document.getElementById(
+    `song-${userData?.currentSong?.id}`
+  );
+
+  // Remove highlight from all songs
+  playlistSongElements.forEach((songEl) => {
+    songEl.classList.remove("highlighted");
+  });
+
+  // Highlight current song
+  if (songToHighlight) songToHighlight.classList.add("highlighted");
+};
+
 const updateProgressBar = () => {
   const progressBar = document.getElementById('progress-bar');
   progressBar.style.width = (audio.currentTime / audio.duration) * 100 + '%';
@@ -180,21 +196,7 @@ const setPlayerDisplay = () => {
   songArtist.textContent = currentArtist ? currentArtist : "";
 };
 
-// Highlight current song
-const highlightCurrentSong = () => {
-  const playlistSongElements = document.querySelectorAll(".playlist-song");
-  const songToHighlight = document.getElementById(
-    `song-${userData?.currentSong?.id}`
-  );
 
-  // Remove highlight from all songs
-  playlistSongElements.forEach((songEl) => {
-    songEl.removeAttribute("aria-current");
-  });
-
-  // Highlight current song
-  if (songToHighlight) songToHighlight.setAttribute("aria-current", "true");
-};
 
 // Render songs
 const renderSongs = (array) => {
