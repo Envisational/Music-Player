@@ -217,8 +217,19 @@ body {
     -webkit-appearance: none;
     -moz-appearance: none;
     transition: background 0.2s ease-in-out;
+    --thumb-size: 20px;
 }
-#volume-control:hover {
+#volume-control::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    border-radius: 50%;
+    background: #feac32;
+    cursor: pointer;
+    margin-top: -3px;
+}
+#volume-control:hover, .progress-container:hover {
     background: rgba(255, 255, 255, 0.5);
 }
 #volume-control::-webkit-slider-thumb {
