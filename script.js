@@ -192,8 +192,8 @@ const setPlayerDisplay = () => {
   const currentArtist = userData?.currentSong?.artist;
 
   // Set player display
-  playingSong.textContent = currentTitle ? currentTitle : "";
-  songArtist.textContent = currentArtist ? currentArtist : "";
+  playingSong.textContent = currentTitle ? currentTitle : "Song Title";
+  songArtist.textContent = currentArtist ? currentArtist : "Artist Name";
 };
 
 
