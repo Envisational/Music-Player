@@ -293,13 +293,15 @@ renderSongs(sortSongs());
 setPlayButtonAccessibleText();
 
 // Event listener for window load (loading spinner)
-window.addEventListener('load', () => {
-  const spinner = document.getElementById('loading-spinner');
+document.addEventListener('DOMContentLoaded', () => {
+  const loadingOverlay = document.getElementById('loading-overlay');
   const content = document.getElementById('content');
-  
+
+  // Simulate loading for demonstration purposes
   setTimeout(() => {
-      spinner.style.display = 'none';
+      loadingOverlay.style.display = 'none';
       content.classList.remove('blurred');
-  }, 1000); // 1000 milliseconds = 1 second
+  }, 2000); // Adjust time as necessary
 });
+
 
