@@ -70,7 +70,7 @@ const allSongs = [
     id: 8,
     title: "Clint Eastwood",
     artist: "Gorillaz",
-    duration: "06:42",
+    duration: "06:43",
     url: "assets/songs/Gorillaz - Clint Eastwood.mp3",
   },
   {
@@ -128,6 +128,41 @@ const allSongs = [
     artist: "OneRepublic",
     duration: "02:43",
     url: "assets/songs/OneRepublic - Good Life.mp3",
+  },
+  {
+    id: 17,
+    title: "The Salmon Dance",
+    artist: "The Chemical Brothers",
+    duration: "02:43",
+    url: "assets/songs/The Chemical Brothers - The Salmon Dance.mp3",
+  },
+  {
+    id: 18,
+    title: "Give Up The Funk",
+    artist: "Parliament",
+    duration: "05:48",
+    url: "assets/songs/Parliament - Give Up The Funk (Tear The Roof Off The Sucker).mp3",
+  },
+  {
+    id: 18,
+    title: "Cotton Eye Joe",
+    artist: "Rednex",
+    duration: "05:14",
+    url: "assets/songs/Rednex - Cotton Eye Joe.mp3",
+  },
+  {
+    id: 19,
+    title: "Awakening",
+    artist: "Zak Abel",
+    duration: "02:43",
+    url: "assets/songs/Zak Abel - Awakening.mp3",
+  },
+  {
+    id: 20,
+    title: "Sing",
+    artist: "Travis",
+    duration: "03:48",
+    url: "assets/songs/Travis - Sing.mp3",
   },
 
 ];
