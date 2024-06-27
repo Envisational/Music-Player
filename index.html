@@ -8,6 +8,10 @@
     <title>Boo Boo Music Player</title>
 </head>
 <body>
+    <div id="password-prompt" class="password-prompt">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button onclick="checkPassword()">Submit</button>
+    </div>    
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-text">Loading...</div>
         <div class="loading-progress-bar">
@@ -94,6 +98,7 @@
         <ul id="playlist-songs"></ul>
       </div>
     </div>
+    <script src="https://apis.google.com/js/api.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

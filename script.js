@@ -1,3 +1,65 @@
+function checkPassword() {
+  const password = document.getElementById('password').value;
+  if (password === 'your_password') {
+      document.getElementById('password-prompt').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+  } else {
+      alert('Incorrect password');
+  }
+}
+
+
+function initClient() {
+  gapi.client.init({
+      apiKey: 'YOUR_API_KEY',
+      clientId: 'YOUR_CLIENT_ID',
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+      scope: 'https://www.googleapis.com/auth/drive.readonly'
+  }).then(function () {
+      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+      updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+  });
+}
+
+gapi.load('client:auth2', initClient);
+
+
+function handleAuthClick(event) {
+  gapi.auth2.getAuthInstance().signIn();
+}
+
+function handleSignoutClick(event) {
+  gapi.auth2.getAuthInstance().signOut();
+}
+
+function updateSigninStatus(isSignedIn) {
+  if (isSignedIn) {
+      listFiles();
+  } else {
+      handleAuthClick();
+  }
+}
+
+function listFiles() {
+  gapi.client.drive.files.list({
+      'pageSize': 100,
+      'fields': "nextPageToken, files(id, name, mimeType)"
+  }).then(function(response) {
+      const files = response.result.files;
+      if (files && files.length > 0) {
+          userData.songs = files.filter(file => file.mimeType === 'audio/mpeg').map((file, index) => ({
+              id: index,
+              title: file.name.split('.')[0],
+              artist: 'Unknown Artist',
+              duration: 'Unknown Duration',
+              url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+          }));
+          renderSongs(userData.songs);
+      }
+  });
+}
+
+
 // Global Variables
 const playlistSongs = document.getElementById("playlist-songs");
 const playButton = document.getElementById("play");
@@ -8,171 +70,65 @@ const shuffleButton = document.getElementById("shuffle");
 const progressBarContainer = document.getElementById('progress-container');
 const progressBar = document.getElementById('progress-bar');
 
-// all songs array
-const allSongs = [
-  {
-    id: 0,
-    title: "1901",
-    artist: "Phoenix",
-    duration: "02:43",
-    url: "assets/songs/Phoenix-1901.mp3",
-  },
-  {
-    id: 1,
-    title: "Rhinestone Eyes",
-    artist: "Gorillaz",
-    duration: "03:20",
-    url: "assets/songs/Gorillaz-Rhinestone Eyes.mp3",
-  },
-  {
-    id: 2,
-    title: "Shimmy Shimmy Ya",
-    artist: "ODB",
-    duration: "03:48",
-    url: "assets/songs/ODB-Shimmy Shimmy Ya.mp3",
-  },
-  {
-    id: 3,
-    title: "Work it",
-    artist: "Missy Elliot",
-    duration: "02:43",
-    url: "assets/songs/Missy Elliot - Work It.mp3",
-  },
-  {
-    id: 4,
-    title: "Lose Control (Ft. Ciara & Fat Man Scoop)",
-    artist: "Missy Elliot",
-    duration: "03:47",
-    url: "assets/songs/Missy Elliott - Lose Control (Ft. Ciara & Fat Man Scoop).mp3",
-  },
-  {
-    id: 5,
-    title: "HIT IT",
-    artist: "Black Eyed Peas, Saweetie, Lele Pons",
-    duration: "02:43",
-    url: "assets/songs/Black Eyed Peas, Saweetie, Lele Pons - HIT IT.mp3",
-  },
-  {
-    id: 6,
-    title: "CUFF IT",
-    artist: "Beyoncé",
-    duration: "02:43",
-    url: "assets/songs/Beyoncé - CUFF IT.mp3",
-  },
-  {
-    id: 7,
-    title: "Chin up High",
-    artist: "Ame Bibabi",
-    duration: "02:33",
-    url: "assets/songs/Ame Bibabi - Chin up High.mp3",
-  },
-  {
-    id: 8,
-    title: "Clint Eastwood",
-    artist: "Gorillaz",
-    duration: "06:43",
-    url: "assets/songs/Gorillaz - Clint Eastwood.mp3",
-  },
-  {
-    id: 9,
-    title: "Feel Good Inc",
-    artist: "Gorillaz",
-    duration: "03:59",
-    url: "assets/songs/Gorillaz - Feel Good Inc.mp3",
-  },
-  {
-    id: 10,
-    title: "Woman",
-    artist: "Doja Cat",
-    duration: "02:53",
-    url: "assets/songs/Doja Cat - Woman.mp3",
-  },
-  {
-    id: 11,
-    title: "Pon de Replay",
-    artist: "Rihanna",
-    duration: "02:43",
-    url: "assets/songs/Rihanna - Pon de Replay.mp3",
-  },
-  {
-    id: 12,
-    title: "Life Goes On",
-    artist: "Oliver Tree",
-    duration: "02:26",
-    url: "assets/songs/Oliver Tree - Life Goes On.mp3",
-  },
-  {
-    id: 13,
-    title: "Люди",
-    artist: "Дайте танк (!)",
-    duration: "02:50",
-    url: "assets/songs/Дайте танк (!) Люди.mp3",
-  },
-  {
-    id: 14,
-    title: "Shots",
-    artist: "lil john",
-    duration: "02:43",
-    url: "assets/songs/lil john - Shots.mp3",
-  },
-  {
-    id: 15,
-    title: "Alive",
-    artist: "Lil Jon, Offset, 2 Chainz",
-    duration: "02:43",
-    url: "assets/songs/Lil Jon, Offset, 2 Chainz - Alive.mp3",
-  },
-  {
-    id: 16,
-    title: "Good Life",
-    artist: "OneRepublic",
-    duration: "02:43",
-    url: "assets/songs/OneRepublic - Good Life.mp3",
-  },
-  {
-    id: 17,
-    title: "The Salmon Dance",
-    artist: "The Chemical Brothers",
-    duration: "02:43",
-    url: "assets/songs/The Chemical Brothers - The Salmon Dance.mp3",
-  },
-  {
-    id: 18,
-    title: "Give Up The Funk",
-    artist: "Parliament",
-    duration: "05:48",
-    url: "assets/songs/Parliament - Give Up The Funk (Tear The Roof Off The Sucker).mp3",
-  },
-  {
-    id: 18,
-    title: "Cotton Eye Joe",
-    artist: "Rednex",
-    duration: "05:14",
-    url: "assets/songs/Rednex - Cotton Eye Joe.mp3",
-  },
-  {
-    id: 19,
-    title: "Awakening",
-    artist: "Zak Abel",
-    duration: "02:43",
-    url: "assets/songs/Zak Abel - Awakening.mp3",
-  },
-  {
-    id: 20,
-    title: "Sing",
-    artist: "Travis",
-    duration: "03:48",
-    url: "assets/songs/Travis - Sing.mp3",
-  },
 
-];
+
 
 const audio = new Audio();
 let userData = {
-  songs: [...allSongs],
-  currentSong: null,
-  songCurrentTime: 0,
+    songs: [],
+    currentSong: null,
+    songCurrentTime: 0,
 };
+
+// Initialize Google API Client
+function initClient() {
+  gapi.client.init({
+      apiKey: 'YOUR_API_KEY',
+      clientId: 'YOUR_CLIENT_ID',
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+      scope: 'https://www.googleapis.com/auth/drive.readonly'
+  }).then(function () {
+      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+      updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+  });
+}
+
+gapi.load('client:auth2', initClient);
+
+function handleAuthClick(event) {
+    gapi.auth2.getAuthInstance().signIn();
+}
+
+function handleSignoutClick(event) {
+    gapi.auth2.getAuthInstance().signOut();
+}
+
+function updateSigninStatus(isSignedIn) {
+    if (isSignedIn) {
+        listFiles();
+    } else {
+        handleAuthClick();
+    }
+}
+
+function listFiles() {
+    gapi.client.drive.files.list({
+        'pageSize': 100,
+        'fields': "nextPageToken, files(id, name, mimeType)"
+    }).then(function(response) {
+        const files = response.result.files;
+        if (files && files.length > 0) {
+            userData.songs = files.filter(file => file.mimeType === 'audio/mpeg').map((file, index) => ({
+                id: index,
+                title: file.name.split('.')[0],
+                artist: 'Unknown Artist',
+                duration: 'Unknown Duration',
+                url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+            }));
+            renderSongs(userData.songs);
+        }
+    });
+}
 
 // Highlight current song
 const highlightCurrentSong = () => {
