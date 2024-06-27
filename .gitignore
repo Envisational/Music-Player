@@ -1,3 +1,5 @@
 # Ignore config.json file
 config.json
 
+# Ignore client_secret.json file
+client_secret.json

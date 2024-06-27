@@ -1,38 +1,46 @@
+// Fetch config and initialize Google API
 fetch('config.json')
   .then(response => response.json())
   .then(config => {
-    // Initialize Google API with the config values
-    gapi.load('client:auth2', () => {
-      gapi.client.init({
-        apiKey: config.apiKey,
-        clientId: config.clientId,
-        discoveryDocs: config.discoveryDocs,
-        scope: config.scope
-      }).then(() => {
-        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-        updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-      });
-    });
-
     // Store the config values in global variables
     window.apiConfig = config;
+
+    // Load the client_secret.json file
+    fetch('client_secret.json')
+      .then(response => response.json())
+      .then(clientSecret => {
+        // Initialize Google API with the client secret values
+        gapi.load('client', () => {
+          gapi.client.init({
+            apiKey: config.apiKey,
+            discoveryDocs: config.discoveryDocs
+          }).then(() => {
+            window.google.accounts.id.initialize({
+              client_id: clientSecret.web.client_id,
+              callback: handleCredentialResponse
+            });
+
+            window.google.accounts.id.prompt(); // Trigger the prompt to sign in
+          }).catch(error => {
+            console.error("Error during Google API client initialization:", error);
+          });
+        });
+      }).catch(error => {
+        console.error("Error fetching client_secret.json:", error);
+      });
+  }).catch(error => {
+    console.error("Error fetching config.json:", error);
   });
 
+function handleCredentialResponse(response) {
+  const token = response.credential;
+  console.log("Credential Response:", response);
 
-function handleAuthClick(event) {
-  gapi.auth2.getAuthInstance().signIn();
-}
+  gapi.auth.setToken({
+    access_token: token
+  });
 
-function handleSignoutClick(event) {
-  gapi.auth2.getAuthInstance().signOut();
-}
-
-function updateSigninStatus(isSignedIn) {
-  if (isSignedIn) {
-    listFiles();
-  } else {
-    handleAuthClick();
-  }
+  listFiles();
 }
 
 function listFiles() {
@@ -50,34 +58,38 @@ function listFiles() {
         title: file.name.split('.')[0],
         artist: 'Unknown Artist',
         duration: 'Unknown Duration',
-        url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+        url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${window.apiConfig.apiKey}`
       }));
       renderSongs(userData.songs);
       // Read metadata for each song
       files.forEach(file => readMetadata(file.id));
     }
+  }).catch(error => {
+    console.error("Error listing files:", error);
   });
 }
 
 function readMetadata(fileId) {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-  jsmediatags.read(url, {
-    onSuccess: tag => {
-      const { title, artist, album } = tag.tags;
-      const songIndex = userData.songs.findIndex(song => song.url === url);
-      if (songIndex !== -1) {
-        userData.songs[songIndex].title = title || userData.songs[songIndex].title;
-        userData.songs[songIndex].artist = artist || userData.songs[songIndex].artist;
-        renderSongs(userData.songs);
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${window.apiConfig.apiKey}`;
+  fetch(url).then(response => response.arrayBuffer()).then(buffer => {
+    jsmediatags.read(new Blob([buffer]), {
+      onSuccess: tag => {
+        const { title, artist } = tag.tags;
+        const songIndex = userData.songs.findIndex(song => song.url === url);
+        if (songIndex !== -1) {
+          userData.songs[songIndex].title = title || userData.songs[songIndex].title;
+          userData.songs[songIndex].artist = artist || userData.songs[songIndex].artist;
+          renderSongs(userData.songs);
+        }
+      },
+      onError: error => {
+        console.log(`Error reading metadata: ${error.type} - ${error.info}`);
       }
-    },
-    onError: error => {
-      console.log(`Error reading metadata: ${error.type} - ${error.info}`);
-    }
+    });
+  }).catch(error => {
+    console.error("Error fetching song metadata:", error);
   });
 }
-
-
 
 // Global Variables
 const playlistSongs = document.getElementById("playlist-songs");
@@ -89,65 +101,14 @@ const shuffleButton = document.getElementById("shuffle");
 const progressBarContainer = document.getElementById('progress-container');
 const progressBar = document.getElementById('progress-bar');
 
-
-
-
 const audio = new Audio();
 let userData = {
-    songs: [],
-    currentSong: null,
-    songCurrentTime: 0,
+  songs: [],
+  currentSong: null,
+  songCurrentTime: 0,
 };
 
-// Initialize Google API Client
-function initClient() {
-  gapi.client.init({
-      apiKey: 'YOUR_API_KEY',
-      clientId: 'YOUR_CLIENT_ID',
-      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-      scope: 'https://www.googleapis.com/auth/drive.readonly'
-  }).then(function () {
-      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-      updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-  });
-}
 
-gapi.load('client:auth2', initClient);
-
-function handleAuthClick(event) {
-    gapi.auth2.getAuthInstance().signIn();
-}
-
-function handleSignoutClick(event) {
-    gapi.auth2.getAuthInstance().signOut();
-}
-
-function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-        listFiles();
-    } else {
-        handleAuthClick();
-    }
-}
-
-function listFiles() {
-    gapi.client.drive.files.list({
-        'pageSize': 100,
-        'fields': "nextPageToken, files(id, name, mimeType)"
-    }).then(function(response) {
-        const files = response.result.files;
-        if (files && files.length > 0) {
-            userData.songs = files.filter(file => file.mimeType === 'audio/mpeg').map((file, index) => ({
-                id: index,
-                title: file.name.split('.')[0],
-                artist: 'Unknown Artist',
-                duration: 'Unknown Duration',
-                url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
-            }));
-            renderSongs(userData.songs);
-        }
-    });
-}
 
 // Highlight current song
 const highlightCurrentSong = () => {
