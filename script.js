@@ -13,11 +13,14 @@ fetch('config.json')
         updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
       });
     });
+
+    // Store the config values in global variables
+    window.apiConfig = config;
   });
 
 function checkPassword() {
   const password = document.getElementById('password').value;
-  if (password === 'your_password') {
+  if (password === window.apiConfig.password) {
     document.getElementById('password-prompt').style.display = 'none';
     document.getElementById('content').style.display = 'block';
   } else {
@@ -42,10 +45,10 @@ function updateSigninStatus(isSignedIn) {
 }
 
 function listFiles() {
-  const folderId = 'YOUR_GOOGLE_DRIVE_FOLDER_ID'; // Google Drive folder ID
+  const folderId = window.apiConfig.folderId; // Use the folder ID from the config
 
   gapi.client.drive.files.list({
-    'q': `'${folderId}' in parents and mimeType='audio/mpeg'`,
+    'q': `'${folderId}' in parents and mimeType contains 'audio/'`,
     'pageSize': 100,
     'fields': "nextPageToken, files(id, name, mimeType)"
   }).then(function(response) {
