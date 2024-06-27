@@ -18,15 +18,6 @@ fetch('config.json')
     window.apiConfig = config;
   });
 
-function checkPassword() {
-  const password = document.getElementById('password').value;
-  if (password === window.apiConfig.password) {
-    document.getElementById('password-prompt').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
-  } else {
-    alert('Incorrect password');
-  }
-}
 
 function handleAuthClick(event) {
   gapi.auth2.getAuthInstance().signIn();
