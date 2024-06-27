@@ -33,19 +33,15 @@ fetch('config.json')
   });
 
 function handleCredentialResponse(response) {
-  const token = response.credential;
   console.log("Credential Response:", response);
-
   gapi.auth.setToken({
-    access_token: token
+    access_token: response.credential
   });
-
   listFiles();
 }
 
 function listFiles() {
   const folderId = window.apiConfig.folderId;
-
   gapi.client.drive.files.list({
     'q': `'${folderId}' in parents and mimeType contains 'audio/'`,
     'pageSize': 100,
