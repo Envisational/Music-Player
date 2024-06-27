@@ -45,13 +45,13 @@ function updateSigninStatus(isSignedIn) {
 }
 
 function listFiles() {
-  const folderId = window.apiConfig.folderId; // Use the folder ID from the config
+  const folderId = window.apiConfig.folderId;
 
   gapi.client.drive.files.list({
     'q': `'${folderId}' in parents and mimeType contains 'audio/'`,
     'pageSize': 100,
     'fields': "nextPageToken, files(id, name, mimeType)"
-  }).then(function(response) {
+  }).then(response => {
     const files = response.result.files;
     if (files && files.length > 0) {
       userData.songs = files.map((file, index) => ({
@@ -62,6 +62,26 @@ function listFiles() {
         url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
       }));
       renderSongs(userData.songs);
+      // Read metadata for each song
+      files.forEach(file => readMetadata(file.id));
+    }
+  });
+}
+
+function readMetadata(fileId) {
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+  jsmediatags.read(url, {
+    onSuccess: tag => {
+      const { title, artist, album } = tag.tags;
+      const songIndex = userData.songs.findIndex(song => song.url === url);
+      if (songIndex !== -1) {
+        userData.songs[songIndex].title = title || userData.songs[songIndex].title;
+        userData.songs[songIndex].artist = artist || userData.songs[songIndex].artist;
+        renderSongs(userData.songs);
+      }
+    },
+    onError: error => {
+      console.log(`Error reading metadata: ${error.type} - ${error.info}`);
     }
   });
 }
