@@ -1,28 +1,29 @@
+fetch('config.json')
+  .then(response => response.json())
+  .then(config => {
+    // Initialize Google API with the config values
+    gapi.load('client:auth2', () => {
+      gapi.client.init({
+        apiKey: config.apiKey,
+        clientId: config.clientId,
+        discoveryDocs: config.discoveryDocs,
+        scope: config.scope
+      }).then(() => {
+        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+        updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+      });
+    });
+  });
+
 function checkPassword() {
   const password = document.getElementById('password').value;
   if (password === 'your_password') {
-      document.getElementById('password-prompt').style.display = 'none';
-      document.getElementById('content').style.display = 'block';
+    document.getElementById('password-prompt').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
   } else {
-      alert('Incorrect password');
+    alert('Incorrect password');
   }
 }
-
-
-function initClient() {
-  gapi.client.init({
-      apiKey: 'YOUR_API_KEY',
-      clientId: 'YOUR_CLIENT_ID',
-      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-      scope: 'https://www.googleapis.com/auth/drive.readonly'
-  }).then(function () {
-      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-      updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-  });
-}
-
-gapi.load('client:auth2', initClient);
-
 
 function handleAuthClick(event) {
   gapi.auth2.getAuthInstance().signIn();
@@ -34,30 +35,34 @@ function handleSignoutClick(event) {
 
 function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
-      listFiles();
+    listFiles();
   } else {
-      handleAuthClick();
+    handleAuthClick();
   }
 }
 
 function listFiles() {
+  const folderId = 'YOUR_GOOGLE_DRIVE_FOLDER_ID'; // Google Drive folder ID
+
   gapi.client.drive.files.list({
-      'pageSize': 100,
-      'fields': "nextPageToken, files(id, name, mimeType)"
+    'q': `'${folderId}' in parents and mimeType='audio/mpeg'`,
+    'pageSize': 100,
+    'fields': "nextPageToken, files(id, name, mimeType)"
   }).then(function(response) {
-      const files = response.result.files;
-      if (files && files.length > 0) {
-          userData.songs = files.filter(file => file.mimeType === 'audio/mpeg').map((file, index) => ({
-              id: index,
-              title: file.name.split('.')[0],
-              artist: 'Unknown Artist',
-              duration: 'Unknown Duration',
-              url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
-          }));
-          renderSongs(userData.songs);
-      }
+    const files = response.result.files;
+    if (files && files.length > 0) {
+      userData.songs = files.map((file, index) => ({
+        id: index,
+        title: file.name.split('.')[0],
+        artist: 'Unknown Artist',
+        duration: 'Unknown Duration',
+        url: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+      }));
+      renderSongs(userData.songs);
+    }
   });
 }
+
 
 
 // Global Variables
