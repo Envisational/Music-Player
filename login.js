@@ -14,7 +14,7 @@ fetch('config.json')
 function checkPassword() {
     const password = document.getElementById('password').value;
     if (password === config.password) {
-        const redirectUrl = atob('bWFpbi5odG1s');  // Base64 encoded 'main.html'
+        const redirectUrl = atob('bWFpbi5odG1s');  // Base64 encoded
         window.location.href = redirectUrl;
     } else {
         alert('Incorrect password');
