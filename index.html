@@ -1,63 +1,175 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="login.js" defer></script>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #282c34;
-            color: #fff;
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
+<html>
+  <head>
+    <title>Boosic Player</title>
+    <meta charset="utf-8" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+  </head>
+  <body>
+    <p>Authorize</p>
+
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+
+    <pre id="content" style="white-space: pre-wrap;"></pre>
+
+    <script type="text/javascript">
+        // Global variables for API configuration, initialized asynchronously
+        let API_KEY = '';
+        let CLIENT_ID = '';
+        let CLIENT_SECRET = '';
+        let FOLDER_ID = '';
+
+        // Load configurations and initialize application
+        Promise.all([
+            fetch('config.json').then(response => response.json()),
+            fetch('client_secret.json').then(response => response.json())
+        ]).then(([configData, secretData]) => {
+            API_KEY = configData.apiKey;
+            FOLDER_ID = configData.folderId;
+            CLIENT_ID = secretData.web.client_id;
+            CLIENT_SECRET = secretData.web.client_secret;
+
+            // Load and initialize the Google API Client
+            gapi.load('client', gapiLoaded);
+        }).catch(error => {
+            console.error("Error loading configurations:", error);
+        });
+
+        // Discovery doc URL for APIs used by the quickstart
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
+
+        // Callback after api.js is loaded.
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
         }
 
-        #password-prompt {
-            background-color: #3b4048;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            width: 300px;
+        // Callback after the API client is loaded. Loads the discovery doc to initialize the API.
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
         }
 
-        .form-control {
-            background-color: #2c3033;
-            border-color: #2c3033;
-            box-shadow: none;
+        // Callback after Google Identity Services are loaded.
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (resp) => {
+                    if (resp.error !== undefined) {
+                        throw (resp);
+                    }
+                    document.getElementById('signout_button').style.visibility = 'visible';
+                    document.getElementById('authorize_button').innerText = 'Refresh';
+                    fetchAndProcessSongsFromGoogleDrive();
+                },
+            });
+            gisInited = true;
+            maybeEnableButtons();
         }
 
-        .form-control:focus {
-            border-color: #feac32;
+        // Enables user interaction after all libraries are loaded.
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authorize_button').style.visibility = 'visible';
+            }
         }
 
-        .btn-custom {
-            background-color: #feac32;
-            color: #fff;
-            border: none;
-            padding: 10px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 18px;
+        // Sign in the user upon button click.
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                document.getElementById('signout_button').style.visibility = 'visible';
+                document.getElementById('authorize_button').innerText = 'Refresh';
+                await fetchAndProcessSongsFromGoogleDrive();
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
         }
 
-        .btn-custom:hover {
-            background-color: #e69b2b;
+        // Sign out the user upon button click.
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+                document.getElementById('content').innerText = '';
+                document.getElementById('authorize_button').innerText = 'Authorize';
+                document.getElementById('signout_button').style.visibility = 'hidden';
+            }
         }
 
-    </style>
-</head>
-<body>
-    <div id="password-prompt" class="container">
-        <form class="form-group">
-            <input type="password" id="password" class="form-control mb-3" placeholder="Enter password">
-            <button type="submit" class="btn btn-custom">Submit</button>
-        </form>
-    </div>
-</body>
+        // Fetch and process songs from Google Drive
+        async function fetchAndProcessSongsFromGoogleDrive() {
+            const query = `'${FOLDER_ID}' in parents and mimeType contains 'audio/'`;
+            try {
+                const response = await gapi.client.drive.files.list({
+                    'q': query,
+                    'pageSize': 100,
+                    'fields': 'files(id, name, mimeType, webContentLink)'
+                });
+
+                const files = response.result.files;
+                if (files.length > 0) {
+                    console.log("Found files:", files);
+                    const songs = [];
+                    const promises = files.map(file => {
+                        const url = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${API_KEY}`;
+                        console.log(`Fetching file from URL: ${url}`);
+                        return fetch(url)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.arrayBuffer();
+                            })
+                            .then(buffer => {
+                                return jsmediatags.read(new Blob([buffer]))
+                                    .then(tag => {
+                                        const { title, artist } = tag.tags;
+                                        songs.push({
+                                            id: file.id,
+                                            title: title || file.name,
+                                            artist: artist || 'Unknown Artist',
+                                            url: url
+                                        });
+                                    });
+                            })
+                            .catch(error => {
+                                console.error(`Error fetching or processing file ${file.name}:`, error);
+                            });
+                    });
+                    await Promise.all(promises);
+                    localStorage.setItem('songs', JSON.stringify(songs));
+                    window.location.href = 'main.html';
+                } else {
+                    console.log("No audio files found in the folder.");
+                }
+            } catch (error) {
+                console.error('Error listing files from Google Drive:', error);
+            }
+        }
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+  </body>
 </html>
