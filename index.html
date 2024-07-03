@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>Boosic Player</title>
     <meta charset="utf-8" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js" integrity="sha512-YsR46MmyChktsyMMou+Bs74oCa/CDdwft7rJ5wlnmDzMj1mzqncsfJamEEf99Nk7IB0JpTMo5hS8rxB49FUktQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  </head>
-  <body>
+</head>
+<body>
     <p>Authorize</p>
 
     <!--Add buttons to initiate auth sequence and sign out-->
@@ -20,6 +20,13 @@
         let CLIENT_ID = '';
         let CLIENT_SECRET = '';
         let FOLDER_ID = '';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
 
         // Load configurations and initialize application
         Promise.all([
@@ -41,13 +48,6 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-
-        document.getElementById('authorize_button').style.visibility = 'hidden';
-        document.getElementById('signout_button').style.visibility = 'hidden';
-
         // Callback after api.js is loaded.
         function gapiLoaded() {
             gapi.load('client', initializeGapiClient);
@@ -68,13 +68,13 @@
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
-                callback: (resp) => {
+                callback: async (resp) => {
                     if (resp.error !== undefined) {
                         throw (resp);
                     }
                     document.getElementById('signout_button').style.visibility = 'visible';
                     document.getElementById('authorize_button').innerText = 'Refresh';
-                    fetchAndProcessSongsFromGoogleDrive();
+                    await fetchAndProcessSongsFromGoogleDrive();
                 },
             });
             gisInited = true;
@@ -143,16 +143,24 @@
                                 return response.arrayBuffer();
                             })
                             .then(buffer => {
-                                return jsmediatags.read(new Blob([buffer]))
-                                    .then(tag => {
-                                        const { title, artist } = tag.tags;
-                                        songs.push({
-                                            id: file.id,
-                                            title: title || file.name,
-                                            artist: artist || 'Unknown Artist',
-                                            url: url
-                                        });
+                                return new Promise((resolve, reject) => {
+                                    jsmediatags.read(new Blob([buffer]), {
+                                        onSuccess: tag => {
+                                            const { title, artist } = tag.tags;
+                                            songs.push({
+                                                id: file.id,
+                                                title: title || file.name,
+                                                artist: artist || 'Unknown Artist',
+                                                url: url
+                                            });
+                                            resolve();
+                                        },
+                                        onError: error => {
+                                            console.error(`Error reading tags for file ${file.name}:`, error);
+                                            reject(error);
+                                        }
                                     });
+                                });
                             })
                             .catch(error => {
                                 console.error(`Error fetching or processing file ${file.name}:`, error);
@@ -168,6 +176,7 @@
                 console.error('Error listing files from Google Drive:', error);
             }
         }
+
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>

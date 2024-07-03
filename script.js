@@ -16,6 +16,17 @@ let userData = {
   songCurrentTime: 0,
 };
 
+// Load songs from localStorage
+function loadSongs() {
+  const songsJson = localStorage.getItem('songs');
+  if (songsJson) {
+    userData.songs = JSON.parse(songsJson);
+    renderSongs(userData.songs);
+  } else {
+    console.error('No songs found in localStorage');
+  }
+}
+
 // Highlight current song
 const highlightCurrentSong = () => {
   const playlistSongElements = document.querySelectorAll(".playlist-song");
@@ -391,6 +402,8 @@ const sortSongs = () => {
   return userData?.songs;
 };
 
+// Load songs from localStorage
+loadSongs();
 
 // Render songs
 // Call sortSongs to sort the songs array before rendering it
@@ -414,5 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
       content.classList.remove('blurred');
   }, 2000); // 2 seconds
 });
+
 
 
